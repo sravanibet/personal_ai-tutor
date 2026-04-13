@@ -1,0 +1,5 @@
+streamlit
+requests
+#if you do not have bew install it
+#brew install ollama
+#ollama pull mistral

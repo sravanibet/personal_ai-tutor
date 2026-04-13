@@ -1,0 +1,20 @@
+1. Clone the repository:
+git clone https://github.com/YOUR_USERNAME/ML_tutor_chatbot.git
+cd ML_tutor_chatbot
+
+2. Make sure to download ollama model after cloning is done
+follow requirements to understand on how to download after installing run ollama run mistral to check if the model is working by asking basic ML question in terminal.
+
+3. Create local evev before going to next steps 
+python3 -m venv venv
+source venv/bin/activate   # Mac
+
+4. run pip install -r requirements.txt in terminal streamlit will be installed in your laorop
+
+5. before running streamlit get your model active using the following cmd
+ollama serve
+
+6. Run streamlit 
+streamlit run app.py
+
+7. when you are pushing remember to create a branch and send a merge request after removing venv from the folder
