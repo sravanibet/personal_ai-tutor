@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 def build_system_prompt(difficulty: str, mode: str) -> str:
@@ -42,7 +42,7 @@ def build_messages(
     user_question: str,
     difficulty: str,
     mode: str,
-    chat_history: List[Dict[str, str]] | None = None,
+    chat_history: Optional[List[Dict[str, str]]] = None,
 ) -> List[Dict[str, str]]:
     messages: List[Dict[str, str]] = [
         {"role": "system", "content": build_system_prompt(difficulty, mode)}
