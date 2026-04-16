@@ -1,5 +1,10 @@
 streamlit
 requests
+langchain
+chromadb
+sentence-transformers
+pypdf
+python-docx
 #if you do not have bew install it
 #brew install ollama
 #ollama pull mistral

@@ -1,20 +1,121 @@
-1. Clone the repository:
-git clone https://github.com/YOUR_USERNAME/ML_tutor_chatbot.git
-cd ML_tutor_chatbot
+# 🎓 ML Tutor Chatbot
 
-2. Make sure to download ollama model after cloning is done
-follow requirements to understand on how to download after installing run ollama run mistral to check if the model is working by asking basic ML question in terminal.
+ML Tutor Chatbot is a local AI-powered tutoring assistant for Machine Learning.  
+It combines a local LLM, tutor-style prompting, and a simple RAG (Retrieval-Augmented Generation) pipeline to help students learn concepts step-by-step.
 
-3. Create local evev before going to next steps 
-python3 -m venv venv
-source venv/bin/activate   # Mac
+---
 
-4. run pip install -r requirements.txt in terminal streamlit will be installed in your laorop
+## 🚀 Features
 
-5. before running streamlit get your model active using the following cmd
-ollama serve
+- 💬 Ask Machine Learning questions (theory + formulas)
+- 📂 Upload notes (PDF, DOCX, TXT)
+- 🔍 Retrieves relevant content from uploaded notes
+- 🧠 Tutor-style responses:
+  - Short answer
+  - Intuition / analogy
+  - Step-by-step explanation
+  - Optional formula explanation
+- 🎯 Adjustable difficulty (Beginner → Advanced)
+- 🧪 Modes: Explain, Quiz, Hint
+- ⚙️ Runs fully locally using Ollama
 
-6. Run streamlit 
-streamlit run app.py
+---
 
-7. when you are pushing remember to create a branch and send a merge request after removing venv from the folder
+## 🏗️ Tech Stack
+
+- Python  
+- Streamlit (UI)  
+- Ollama (Local LLM - Mistral)  
+- Custom RAG Pipeline  
+- LangChain utilities  
+
+---
+
+## ⚙️ Setup Instructions (Step-by-Step)
+
+### 1. Clone the repository
+
+git clone https://github.com/YOUR_USERNAME/ML_tutor_chatbot.git  
+cd ML_tutor_chatbot  
+
+### 2. Create and activate virtual environment
+
+python3 -m venv venv  
+source venv/bin/activate   # Mac/Linux  
+
+### 3. Install dependencies
+
+pip install -r requirements.txt  
+
+### 4. Install and setup Ollama
+
+Download Ollama from https://ollama.com  
+
+Pull the model using:  
+ollama pull mistral  
+
+Test the model:  
+ollama run mistral  
+
+Ask a simple ML question in terminal to verify it works.
+
+### 5. Start Ollama server
+
+ollama serve  
+
+### 6. Run the Streamlit app
+
+streamlit run app.py  
+
+---
+
+## 📂 Supported File Types
+
+- PDF (typed text only)  
+- DOCX  
+- TXT  
+
+⚠️ Handwritten or scanned PDFs may not work properly in this version.
+
+---
+
+## 🧠 How It Works
+
+1. Upload notes  
+2. Notes are extracted, chunked, and stored in the retriever  
+3. When a question is asked, relevant chunks are retrieved  
+4. Retrieved context is passed to the model  
+5. The model responds in tutor-style format  
+
+---
+
+## 👥 Team Workflow
+
+- Always create a new branch  
+- Do not push directly to main  
+- Submit a Pull Request for review  
+
+---
+
+## 📌 Important Notes
+
+Make sure NOT to push:
+- venv/  
+- __pycache__/  
+- .DS_Store  
+
+---
+
+## 💡 Project Goal
+
+To build an AI tutor that:
+- explains concepts clearly  
+- adapts to student level  
+- uses course material as grounding  
+- feels like a real teaching assistant  
+
+---
+
+## 👨‍💻 Author
+
+Developed as part of a Machine Learning + AI Systems project.
