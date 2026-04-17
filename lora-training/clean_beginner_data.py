@@ -2,6 +2,9 @@ import json
 import re
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data
+
 INPUT_FILE = "data/project_ai_tutor_full.jsonl"
 OUTPUT_FILE = "data/beginner_clean_v2.jsonl"
 
