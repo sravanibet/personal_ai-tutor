@@ -1,12 +1,16 @@
 import json
 from datasets import load_dataset
 from transformers import AutoTokenizer
+from pathlib import Path
 
 MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
 
-DATA_FILE = r"C:\Users\rashm\Downloads\ml_tutor_chatbot\project_ai_tutor_dataset\final_training_dataset.jsonl"
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+OUTPUT_DIR = BASE_DIR / "processed_dataset"
 
-OUTPUT_PATH = r"C:\Users\rashm\Downloads\ml_tutor_chatbot\project_ai_tutor_dataset\processed_dataset"
+DATA_FILE = DATA_DIR / "final_training_dataset.jsonl"
+OUTPUT_PATH = OUTPUT_DIR
 
 # Load tokenizer
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
