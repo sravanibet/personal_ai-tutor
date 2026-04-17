@@ -1,9 +1,11 @@
 import json
 import re
 from pathlib import Path
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
 
-INPUT_FILE = r"C:\Users\rashm\Downloads\ml_tutor_chatbot\project_ai_tutor_dataset\project_ai_tutor_full.jsonl"
-OUTPUT_FILE = r"C:\Users\rashm\Downloads\ml_tutor_chatbot\project_ai_tutor_dataset\intermediate_clean_v2.jsonl"
+INPUT_FILE = DATA_DIR / "project_ai_tutor_full.jsonl"
+OUTPUT_FILE = DATA_DIR / "intermediate_clean_v2.jsonl"
 
 INTERMEDIATE_PATTERNS = [
     r"\bcompare\b",
