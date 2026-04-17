@@ -2,8 +2,8 @@ import json
 import re
 from pathlib import Path
 
-INPUT_FILE = r"C:\Users\rashm\Downloads\ml_tutor_chatbot\project_ai_tutor_dataset\project_ai_tutor_full.jsonl"
-OUTPUT_FILE = r"C:\Users\rashm\Downloads\ml_tutor_chatbot\project_ai_tutor_dataset\beginner_clean_v2.jsonl"
+INPUT_FILE = "data/project_ai_tutor_full.jsonl"
+OUTPUT_FILE = "data/beginner_clean_v2.jsonl"
 
 BEGINNER_PATTERNS = [
     r"\bwhat is\b",
