@@ -1,17 +1,22 @@
 import torch
+from pathlib import Path
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 from peft import LoraConfig, get_peft_model
 
 MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
-OUTPUT_DIR = "./lora_final_output"
+
+BASE_DIR = Path(__file__).resolve().parent
+TRAIN_FILE = BASE_DIR / "train.jsonl"
+VAL_FILE = BASE_DIR / "val.jsonl"
+OUTPUT_DIR = BASE_DIR / "lora_final_output"
 
 # Load JSONL files directly
 dataset = load_dataset(
     "json",
     data_files={
-        "train": "train.jsonl",
-        "validation": "val.jsonl"
+        "train": str(TRAIN_FILE),
+        "validation": str(VAL_FILE)
     }
 )
 

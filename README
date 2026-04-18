@@ -17,7 +17,7 @@ It combines a local LLM, tutor-style prompting, and a simple RAG (Retrieval-Augm
   - Optional formula explanation
 - 🎯 Adjustable difficulty (Beginner → Advanced)
 - 🧪 Modes: Explain, Quiz, Hint
-- ⚙️ Runs fully locally using Ollama
+- ⚙️ Runs locally using LLMs (Ollama + fine-tuned model support)
 
 ---
 
@@ -28,6 +28,44 @@ It combines a local LLM, tutor-style prompting, and a simple RAG (Retrieval-Augm
 - Ollama (Local LLM - Mistral)  
 - Custom RAG Pipeline  
 - LangChain utilities  
+- LoRA (Low-Rank Adaptation)
+
+---
+
+🧠 How It Works
+
+🔹 RAG Pipeline
+1.Upload notes
+2.Notes are extracted, chunked, and stored in the retriever
+3.Relevant chunks are retrieved for each query
+4.Context + question are passed to the model
+5.Model generates tutor-style response
+
+🔹 Fine-Tuned Model (LoRA)
+1.Dataset is cleaned and categorized (Beginner / Intermediate / Advanced)
+2.Chat data is converted into prompt-response format
+3.Tokenization and masking applied for training
+4.LoRA fine-tuning is performed on a base model
+5.Fine-tuned model generates improved educational responses
+
+🧪 Model Training (LoRA Fine-Tuning)
+
+📊 Dataset Preparation
+Curated dataset split into:
+- Beginner
+- Intermediate
+- Advanced
+Removed duplicates and low-quality samples
+Pattern-based filtering applied to categorize prompts
+
+⚙️ Preprocessing
+Converted chat format into structured prompt-response pairs
+Tokenized using Hugging Face tokenizer
+Prompt tokens masked to train only on assistant responses
+
+🔧 LoRA Fine-Tuning
+Base model: Qwen2.5-0.5B-Instruct
+LoRA applied to attention layers (q_proj, v_proj)
 
 ---
 
