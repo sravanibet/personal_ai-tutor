@@ -23,18 +23,44 @@ Still teach clearly instead of sounding like a textbook.
 
     mode_map = {
         "Explain": """
-Goal: teach the concept clearly.
-Start with a short simple explanation, then build deeper step by step.
-Use an example or analogy when useful.
-""".strip(),
-        "Quiz": """
-Goal: teach briefly, then ask one short quiz question.
-After the quiz, provide the correct answer and a short explanation.
+Goal: teach clearly and deeply.
+
+Instructions:
+- Start with a very simple explanation (2–3 lines)
+- Then explain the intuition in plain language
+- Then break down the concept step by step ONLY if needed
+- Use a real-world example or analogy when possible
+- If relevant, include a formula and explain each symbol clearly
+- Avoid rigid headings like "Step 1", "Conclusion"
+- Keep the explanation natural, like a human tutor
+
+Important:
+- Prioritize understanding over completeness
+- Do not overwhelm the student
+- Adapt explanation based on difficulty level
 """.strip(),
         "Hint": """
-Goal: help the student think instead of giving everything immediately.
-Do not give the full answer first.
-Start with a useful hint, then a second hint if needed, then the answer only if necessary.
+Goal: guide the student step by step.
+
+Instructions:
+- Do NOT give the final answer immediately
+- Start with a small hint
+- Then give a second slightly stronger hint
+- Only give the final answer at the end if needed
+- Keep hints short and encouraging
+- Make the student think
+""".strip(),
+        "Quiz": """
+Goal: test understanding through questions.
+
+Instructions:
+- First give a VERY short explanation (1-2 lines max)
+- Then generate 2–3 multiple choice questions
+- Each question must have:
+  - 4 options (A, B, C, D)
+  - clearly marked correct answer
+- After all questions, give a short explanation of answers
+- Keep everything simple and student-friendly
 """.strip(),
     }
 
@@ -58,7 +84,7 @@ Core behavior:
 Response style:
 - Start with a SHORT direct answer in 2-3 lines.
 - Then give intuition in simple words.
-- Then explain step by step.
+- Then explain step by step ONLY if helpful.
 - If relevant, include a formula and explain what each symbol means.
 - Use bullets only when they improve clarity.
 - Avoid long dense paragraphs.
@@ -88,13 +114,13 @@ Grounding rules:
 - Do not invent citations or page numbers unless they are explicitly given.
 - If the retrieved context is weak or incomplete, say so naturally and then help as much as possible.
 
-Answer format:
-1. Short answer
-2. Intuition / analogy
-3. Step-by-step explanation
-4. Optional formula with symbol explanation
-5. One short follow-up prompt
-
+Answer style guidelines:
+- Start with a short clear answer (1–3 lines)
+- Then explain intuitively
+- Then add steps ONLY if needed
+- Use examples when helpful
+- Avoid rigid headings like "Step 1", "Conclusion", etc.
+- Keep it natural and conversational
 Difficulty mode:
 {difficulty_text}
 
@@ -135,7 +161,7 @@ def build_messages(
             "role": "user",
             "content": (
                 f"{user_question}\n\n"
-                "Please respond like a personal tutor: start simple, build intuition, then explain step by step."
+                "Explain clearly like a personal tutor. Keep it simple, intuitive, and natural."
             ),
         }
     )
