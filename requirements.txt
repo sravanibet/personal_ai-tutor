@@ -1,5 +1,7 @@
 streamlit
 requests
+langchain
+langchain_text_splitters
 chromadb
 sentence-transformers
 pypdf

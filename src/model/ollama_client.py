@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 from typing import Dict, Iterator, List
 
@@ -7,7 +5,7 @@ import requests
 
 
 class OllamaClient:
-    """Simple client for interacting with Ollama chat API."""
+    """Client for interacting with Ollama chat API."""
 
     def __init__(self, base_url: str) -> None:
         self.base_url = base_url.rstrip("/")
@@ -17,21 +15,18 @@ class OllamaClient:
         model: str,
         messages: List[Dict[str, str]],
         temperature: float = 0.3,
-        num_predict: int | None = None,
-        keep_alive: str = "30m",
+        num_predict: int = 1024,
     ) -> str:
         url = f"{self.base_url}/api/chat"
-
-        options = {"temperature": temperature}
-        if num_predict is not None:
-            options["num_predict"] = num_predict
 
         payload = {
             "model": model,
             "messages": messages,
             "stream": False,
-            "keep_alive": keep_alive,
-            "options": options,
+            "options": {
+                "temperature": temperature,
+                "num_predict": num_predict,
+            },
         }
 
         response = requests.post(url, json=payload, timeout=300)
@@ -45,31 +40,36 @@ class OllamaClient:
         model: str,
         messages: List[Dict[str, str]],
         temperature: float = 0.3,
-        num_predict: int | None = None,
-        keep_alive: str = "30m",
+        num_predict: int = 1024,
     ) -> Iterator[str]:
         url = f"{self.base_url}/api/chat"
-
-        options = {"temperature": temperature}
-        if num_predict is not None:
-            options["num_predict"] = num_predict
 
         payload = {
             "model": model,
             "messages": messages,
             "stream": True,
-            "keep_alive": keep_alive,
-            "options": options,
+            "options": {
+                "temperature": temperature,
+                "num_predict": num_predict,
+            },
         }
 
-        with requests.post(url, json=payload, timeout=300, stream=True) as response:
-            response.raise_for_status()
+        response = requests.post(url, json=payload, stream=True, timeout=300)
+        response.raise_for_status()
 
-            for line in response.iter_lines(decode_unicode=True):
-                if not line:
-                    continue
+        for line in response.iter_lines():
+            if not line:
+                continue
 
-                data = json.loads(line)
-                content = data.get("message", {}).get("content", "")
-                if content:
-                    yield content
+            try:
+                data = json.loads(line.decode("utf-8"))
+            except json.JSONDecodeError:
+                continue
+
+            if "message" in data and "content" in data["message"]:
+                chunk = data["message"]["content"]
+                if chunk:
+                    yield chunk
+
+            if data.get("done", False):
+                break
