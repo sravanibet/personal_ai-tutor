@@ -389,9 +389,25 @@ APP_CSS = """
     /* Style the browse button and fix its label */
     [data-testid="stFileUploader"] button {
         background: rgba(255, 255, 255, 0.08) !important;
-        color: var(--text) !important;
+        color: transparent !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
+        position: relative !important;
+    }
+
+    [data-testid="stFileUploader"] button * {
+        visibility: hidden !important;
+    }
+
+    [data-testid="stFileUploader"] button::after {
+        content: "Browse files";
+        visibility: visible !important;
+        color: var(--text);
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.875rem;
+        white-space: nowrap;
     }
 
     .stTextInput input,
