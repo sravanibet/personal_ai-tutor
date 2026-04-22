@@ -378,14 +378,32 @@ APP_CSS = """
     }
 
     [data-testid="stFileUploader"] section > div {
-        color: var(--text-muted) !important;
+        color: var(--muted) !important;
     }
 
+    /* Hide the duplicate "upload" drag-drop instruction text */
+    [data-testid="stFileUploaderDropzoneInstructions"] {
+        display: none !important;
+    }
+
+    /* Style the browse button and fix its label */
     [data-testid="stFileUploader"] button {
         background: rgba(255, 255, 255, 0.08) !important;
         color: var(--text) !important;
         border: 1px solid var(--border) !important;
         border-radius: 8px !important;
+    }
+
+    [data-testid="stFileUploader"] button span {
+        visibility: hidden !important;
+        font-size: 0 !important;
+    }
+
+    [data-testid="stFileUploader"] button::after {
+        content: "Browse files";
+        visibility: visible !important;
+        font-size: 0.875rem;
+        color: var(--text);
     }
 
     .stTextInput input,
@@ -805,7 +823,7 @@ def render_upload_tab(notes_loaded: bool, loaded_filename: str | None) -> tuple[
     )
 
     uploaded_file = st.file_uploader(
-        "Upload notes",
+        "",
         type=["pdf", "docx", "txt"],
         label_visibility="collapsed",
         key=f"upload_notes_{st.session_state.upload_widget_key}",
