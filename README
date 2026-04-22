@@ -1,6 +1,6 @@
-# 🎓 Personal AI Tutor
+# 🎓 ML Tutor Chatbot
 
-Personal AI Tutor is a local AI-powered tutoring assistant for Machine Learning.
+ML Tutor Chatbot is a local AI-powered tutoring assistant for Machine Learning.
 It combines a local LLM (via Ollama), tutor-style prompt engineering, and a RAG pipeline to help students learn concepts step-by-step through chat, quizzes, and hints.
 
 ---
