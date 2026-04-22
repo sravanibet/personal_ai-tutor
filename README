@@ -68,7 +68,7 @@ requirements.txt
 
 ---
 
-## ⚙️ Setup Instructions (Windows)
+## ⚙️ Setup Instructions
 
 ### 1. Install prerequisites
 
@@ -78,45 +78,45 @@ requirements.txt
 
 ### 2. Clone the repo
 
-```powershell
-git clone https://github.com/sravanibet/personal_ai-tutor.git
-cd personal_ai-tutor
+```bash
+git clone https://github.com/Greatf0x/ML_tutor_chatbot.git
+cd ML_tutor_chatbot
 ```
 
 ### 3. Create virtual environment
 
-```powershell
+```bash
 python -m venv .venv
 ```
 
 ### 4. Activate virtual environment
 
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks it:
-
+**Windows (PowerShell):**
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 .venv\Scripts\Activate.ps1
 ```
 
+**Mac / Linux:**
+```bash
+source .venv/bin/activate
+```
+
 ### 5. Install dependencies
 
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
 ### 6. Pull a model
 
-```powershell
+```bash
 ollama pull mistral
 ```
 
 Other supported models (pull any you want to use):
 
-```powershell
+```bash
 ollama pull llama3.2:3b
 ollama pull llama3.2:1b
 ollama pull llama3.1:8b
@@ -125,13 +125,13 @@ ollama pull gemma3:12b
 
 ### 7. Start Ollama (if not already running)
 
-```powershell
+```bash
 ollama serve
 ```
 
 ### 8. Run the app
 
-```powershell
+```bash
 python -m streamlit run app.py
 ```
 
@@ -167,76 +167,12 @@ Each person must run the app on their own machine.
 
 To share over the same WiFi:
 
-```powershell
+```bash
 python -m streamlit run app.py --server.address 0.0.0.0
 ```
 
-Then share your local IP (find it with `ipconfig`). Teammates open `http://<your-ip>:8501`.
+Then share your local IP (find it with `ipconfig` on Windows or `ifconfig` on Mac/Linux). Teammates open `http://<your-ip>:8501`.
 
----
-
-
----
-
-## 🚀 Features
-
-- 💬 Ask Machine Learning questions (theory + formulas)
-- 📂 Upload notes (PDF, DOCX, TXT)
-- 🔍 Retrieves relevant content from uploaded notes
-- 🧠 Tutor-style responses:
-  - Short answer
-  - Intuition / analogy
-  - Step-by-step explanation
-  - Optional formula explanation
-- 🎯 Adjustable difficulty (Beginner → Advanced)
-- 🧪 Modes: Explain, Quiz, Hint
-- ⚙️ Runs locally using LLMs (Ollama + fine-tuned model support)
-
----
-
-## 🏗️ Tech Stack
-
-- Python  
-- Streamlit (UI)  
-- Ollama (Local LLM - Mistral)  
-- Custom RAG Pipeline  
-- LangChain utilities  
-- LoRA (Low-Rank Adaptation)
-
----
-
-🧠 How It Works
-
-🔹 RAG Pipeline
-1.Upload notes
-2.Notes are extracted, chunked, and stored in the retriever
-3.Relevant chunks are retrieved for each query
-4.Context + question are passed to the model
-5.Model generates tutor-style response
-
-🔹 Fine-Tuned Model (LoRA)
-1.Dataset is cleaned and categorized (Beginner / Intermediate / Advanced)
-2.Chat data is converted into prompt-response format
-3.Tokenization and masking applied for training
-4.LoRA fine-tuning is performed on a base model
-5.Fine-tuned model generates improved educational responses
-
-🧪 Model Training (LoRA Fine-Tuning)
-
-📊 Dataset Preparation
-Curated dataset split into:
-- Beginner
-- Intermediate
-- Advanced
-Removed duplicates and low-quality samples
-Pattern-based filtering applied to categorize prompts
-
-⚙️ Preprocessing
-Converted chat format into structured prompt-response pairs
-Tokenized using Hugging Face tokenizer
-Prompt tokens masked to train only on assistant responses
-
-🔧 LoRA Fine-Tuning
 ---
 
 ## 💡 Project Goal
