@@ -1,5 +1,7 @@
+import json
+from typing import Dict, Iterator, List
+
 import requests
-from typing import List, Dict
 
 
 class OllamaClient:
@@ -13,16 +15,21 @@ class OllamaClient:
         model: str,
         messages: List[Dict[str, str]],
         temperature: float = 0.3,
+        num_predict: int | None = None,
+        keep_alive: str = "30m",
     ) -> str:
         url = f"{self.base_url}/api/chat"
+
+        options = {"temperature": temperature}
+        if num_predict is not None:
+            options["num_predict"] = num_predict
 
         payload = {
             "model": model,
             "messages": messages,
             "stream": False,
-            "options": {
-                "temperature": temperature
-            }
+            "keep_alive": keep_alive,
+            "options": options,
         }
 
         response = requests.post(url, json=payload, timeout=300)
@@ -30,3 +37,37 @@ class OllamaClient:
         data = response.json()
 
         return data["message"]["content"].strip()
+
+    def stream_chat(
+        self,
+        model: str,
+        messages: List[Dict[str, str]],
+        temperature: float = 0.3,
+        num_predict: int | None = None,
+        keep_alive: str = "30m",
+    ) -> Iterator[str]:
+        url = f"{self.base_url}/api/chat"
+
+        options = {"temperature": temperature}
+        if num_predict is not None:
+            options["num_predict"] = num_predict
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "stream": True,
+            "keep_alive": keep_alive,
+            "options": options,
+        }
+
+        with requests.post(url, json=payload, timeout=300, stream=True) as response:
+            response.raise_for_status()
+
+            for line in response.iter_lines(decode_unicode=True):
+                if not line:
+                    continue
+
+                data = json.loads(line)
+                content = data.get("message", {}).get("content", "")
+                if content:
+                    yield content

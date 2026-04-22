@@ -69,41 +69,104 @@ LoRA applied to attention layers (q_proj, v_proj)
 
 ---
 
-## ⚙️ Setup Instructions (Step-by-Step)
+## ⚙️ Setup Instructions (Windows)
 
-### 1. Clone the repository
+These steps are the recommended way for teammates to run the project on their own machines.
 
-git clone https://github.com/YOUR_USERNAME/ML_tutor_chatbot.git  
-cd ML_tutor_chatbot  
+### 1. Install prerequisites
 
-### 2. Create and activate virtual environment
+Each teammate needs:
+- Python
+- Git
+- Ollama
 
-python3 -m venv venv  
-source venv/bin/activate   # Mac/Linux  
+Download Ollama from https://ollama.com and make sure it is installed successfully.
 
-### 3. Install dependencies
+### 2. Get the project code
 
-pip install -r requirements.txt  
+If using Git:
 
-### 4. Install and setup Ollama
+```powershell
+git clone <your-repo-url>
+cd ML_tutor_chatbot
+```
 
-Download Ollama from https://ollama.com  
+If not using Git, copy the project folder and open it in a terminal.
 
-Pull the model using:  
-ollama pull mistral  
+### 3. Create the virtual environment
 
-Test the model:  
-ollama run mistral  
+```powershell
+python -m venv .venv
+```
 
-Ask a simple ML question in terminal to verify it works.
+### 4. Activate the virtual environment
 
-### 5. Start Ollama server
+```powershell
+.venv\Scripts\Activate.ps1
+```
 
-ollama serve  
+If PowerShell blocks script execution, run:
 
-### 6. Run the Streamlit app
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.venv\Scripts\Activate.ps1
+```
 
-streamlit run app.py  
+### 5. Install Python dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 6. Pull the Ollama model
+
+```powershell
+ollama pull mistral
+```
+
+### 7. Start Ollama
+
+In a separate terminal, run:
+
+```powershell
+ollama serve
+```
+
+If Ollama is already running in the background on the machine, this step may not be necessary.
+
+### 8. Run the app
+
+```powershell
+.venv\Scripts\python.exe -m streamlit run entry.py
+```
+
+Then open:
+
+```text
+http://localhost:8501
+```
+
+---
+
+## 👥 Teammate Checklist
+
+Before running the app, each teammate should confirm:
+- The repo is downloaded on their machine
+- `.venv` exists
+- `pip install -r requirements.txt` completed successfully
+- Ollama is installed
+- `ollama pull mistral` has been run
+- Ollama is running
+- The app starts with `.venv\Scripts\python.exe -m streamlit run entry.py`
+
+---
+
+## 🌐 Access Notes
+
+- `http://localhost:8501` only works on the same machine that is running the app.
+- Teammates cannot use your `localhost` link from their own computers.
+- For team development, each teammate should run the app locally on their own machine.
+- For a shared public version, Streamlit and Ollama would need to be deployed on a shared server.
 
 ---
 

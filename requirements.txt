@@ -1,6 +1,5 @@
 streamlit
 requests
-langchain
 chromadb
 sentence-transformers
 pypdf

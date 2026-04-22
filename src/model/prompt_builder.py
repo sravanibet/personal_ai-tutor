@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 def build_system_prompt(difficulty: str, mode: str) -> str:
@@ -26,13 +26,14 @@ Still teach clearly instead of sounding like a textbook.
 Goal: teach clearly and deeply.
 
 Instructions:
-- Start with a very simple explanation (2–3 lines)
-- Then explain the intuition in plain language
-- Then break down the concept step by step ONLY if needed
-- Use a real-world example or analogy when possible
-- If relevant, include a formula and explain each symbol clearly
+    - Start with a very simple explanation (2 lines max)
+    - Then explain the intuition in plain language
+    - Add only 2-4 short teaching points if needed
+    - Use one short real-world example or analogy when helpful
+    - Include a formula only if it adds real value
 - Avoid rigid headings like "Step 1", "Conclusion"
 - Keep the explanation natural, like a human tutor
+    - Keep the full answer concise unless the user explicitly asks for more depth
 
 Important:
 - Prioritize understanding over completeness
@@ -49,18 +50,20 @@ Instructions:
 - Only give the final answer at the end if needed
 - Keep hints short and encouraging
 - Make the student think
+    - Keep the full response under 90 words unless the user explicitly asks for more
 """.strip(),
         "Quiz": """
 Goal: test understanding through questions.
 
 Instructions:
 - First give a VERY short explanation (1-2 lines max)
-- Then generate 2–3 multiple choice questions
+    - Then generate exactly 2 multiple choice questions
 - Each question must have:
   - 4 options (A, B, C, D)
   - clearly marked correct answer
 - After all questions, give a short explanation of answers
 - Keep everything simple and student-friendly
+    - Keep the full response compact and avoid extra filler text
 """.strip(),
     }
 
@@ -88,6 +91,7 @@ Response style:
 - If relevant, include a formula and explain what each symbol means.
 - Use bullets only when they improve clarity.
 - Avoid long dense paragraphs.
+- Prefer brevity over completeness unless the user explicitly asks for detail.
 - Avoid sounding robotic, generic, or overly academic.
 - Avoid starting with phrases like "In the context provided" or "Let's break down the concept."
 - Avoid repeating the same analogy frequently. Use varied examples when possible.
@@ -133,15 +137,18 @@ def build_messages(
     user_question: str,
     difficulty: str,
     mode: str,
-    chat_history: List[Dict[str, str]] | None = None,
-    retrieved_context: str | None = None,
+    chat_history: Optional[List[Dict[str, str]]] = None,
+    retrieved_context: Optional[str] = None,
 ) -> List[Dict[str, str]]:
+    recent_history = chat_history[-6:] if chat_history else None
+
     messages: List[Dict[str, str]] = [
         {"role": "system", "content": build_system_prompt(difficulty, mode)}
     ]
+    
 
-    if chat_history:
-        messages.extend(chat_history)
+    if recent_history:
+        messages.extend(recent_history)
 
     if retrieved_context:
         messages.append(
@@ -161,7 +168,7 @@ def build_messages(
             "role": "user",
             "content": (
                 f"{user_question}\n\n"
-                "Explain clearly like a personal tutor. Keep it simple, intuitive, and natural."
+                "Explain clearly like a personal tutor. Keep it simple, intuitive, natural, and concise unless I ask for more detail."
             ),
         }
     )

@@ -1,10 +1,10 @@
 import chromadb
 from chromadb.config import Settings
 
-from src.rag.embedder import Embedder
-
 class SimpleRetriever:
     def __init__(self, collection_name: str = "ml_tutor_notes") -> None:
+        from src.rag.embedder import Embedder
+
         self.client = chromadb.Client(Settings(anonymized_telemetry=False))
         self.collection = self.client.get_or_create_collection(name=collection_name)
         self.embedder = Embedder()
