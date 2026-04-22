@@ -26,9 +26,10 @@ def load_pdf(file_path: str) -> str:
     text_parts = []
 
     for page in reader.pages:
-        page_text = page.extract_text(extraction_mode="layout")
-        if not page_text:
+        try:
             page_text = page.extract_text()
+        except Exception:
+            page_text = None
         if page_text:
             text_parts.append(page_text)
 

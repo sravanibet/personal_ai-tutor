@@ -155,16 +155,11 @@ def prepare_chat_request(
     source_snippets: list[str] = []
     retrieved_context = None
 
-    if not st.session_state.notes_loaded or st.session_state.retriever is None:
-        return None, [], True
-
-    source_snippets = st.session_state.retriever.retrieve(retrieval_query or question, top_k=1)
-
-    if not source_snippets:
-        return None, [], True
-
-    shortened_snippets = [snippet[:600] for snippet in source_snippets]
-    retrieved_context = "\n\n---\n\n".join(shortened_snippets)
+    if st.session_state.notes_loaded and st.session_state.retriever is not None:
+        source_snippets = st.session_state.retriever.retrieve(retrieval_query or question, top_k=3)
+        if source_snippets:
+            shortened_snippets = [snippet[:600] for snippet in source_snippets]
+            retrieved_context = "\n\n---\n\n".join(shortened_snippets)
 
     recent_history = st.session_state.chat_history[-4:]
 

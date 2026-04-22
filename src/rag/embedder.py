@@ -1,11 +1,25 @@
-from sentence_transformers import SentenceTransformer
+from __future__ import annotations
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 
 class Embedder:
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
-        self.model = SentenceTransformer(model_name)
+    def __init__(self) -> None:
+        self.vectorizer = TfidfVectorizer(stop_words="english")
+        self._is_fitted = False
 
     def encode_documents(self, texts: list[str]) -> list[list[float]]:
-        return self.model.encode(texts).tolist()
+        if not texts:
+            self._is_fitted = False
+            return []
+
+        matrix = self.vectorizer.fit_transform(texts)
+        self._is_fitted = True
+        return matrix.toarray().tolist()
 
     def encode_query(self, query: str) -> list[float]:
-        return self.model.encode([query])[0].tolist()
+        if not self._is_fitted:
+            return []
+
+        matrix = self.vectorizer.transform([query])
+        return matrix.toarray()[0].tolist()

@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 def build_system_prompt(difficulty: str, mode: str) -> str:
@@ -54,20 +54,9 @@ Goal: test understanding.
     return f"""
 You are a friendly Machine Learning tutor.
 
-🚨 STRICT RULE:
-You MUST answer ONLY using the provided notes.
-
-If the answer is NOT in the notes:
-👉 Reply EXACTLY:
-"I could not find relevant information in the uploaded notes."
-
-DO NOT:
-- Use outside knowledge
-- Guess
-- Explain generally
-- Add extra information
-
-ONLY use the retrieved notes.
+Answer ONLY using the provided notes from the student's document.
+If notes are provided, base your entire answer on them.
+If no notes are provided, say: "Please upload your notes first so I can answer from your material."
 
 STYLE:
 - Friendly and clear
@@ -87,8 +76,8 @@ def build_messages(
     user_question: str,
     difficulty: str,
     mode: str,
-    chat_history: List[Dict[str, str]] | None = None,
-    retrieved_context: str | None = None,
+    chat_history: Optional[List[Dict[str, str]]] = None,
+    retrieved_context: Optional[str] = None,
 ) -> List[Dict[str, str]]:
 
     messages: List[Dict[str, str]] = [
@@ -113,11 +102,7 @@ def build_messages(
         messages.append(
             {
                 "role": "system",
-                "content": (
-                    'No notes available.\n'
-                    'Reply EXACTLY:\n'
-                    '"I could not find relevant information in the uploaded notes."'
-                ),
+                "content": "No notes have been uploaded. Ask the student to upload their document first.",
             }
         )
 

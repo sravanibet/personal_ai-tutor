@@ -1,50 +1,43 @@
-import chromadb
-from chromadb.config import Settings
+import math
 
 from src.rag.embedder import Embedder
 
 
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(x * x for x in b))
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
 class SimpleRetriever:
     def __init__(self, collection_name: str = "ml_tutor_notes") -> None:
-        self.client = chromadb.Client(Settings(anonymized_telemetry=False))
-        self.collection = self.client.get_or_create_collection(name=collection_name)
         self.embedder = Embedder()
+        self._chunks: list[str] = []
+        self._embeddings: list[list[float]] = []
 
     def add_chunks(self, chunks: list[str]) -> None:
         if not chunks:
             return
+        self._chunks = chunks
+        self._embeddings = self.embedder.encode_documents(chunks)
 
-        existing = self.collection.get()
-        if existing and existing.get("ids"):
-            self.collection.delete(ids=existing["ids"])
-
-        embeddings = self.embedder.encode_documents(chunks)
-        ids = [f"chunk_{i}" for i in range(len(chunks))]
-
-        self.collection.add(
-            ids=ids,
-            documents=chunks,
-            embeddings=embeddings,
-        )
-
-    def retrieve(self, query: str, top_k: int = 1, max_distance: float = 1.2) -> list[str]:
-        query_embedding = self.embedder.encode_query(query)
-
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k,
-            include=["documents", "distances"],
-        )
-
-        docs = results.get("documents", [[]])
-        distances = results.get("distances", [[]])
-
-        if not docs or not docs[0]:
+    def retrieve(self, query: str, top_k: int = 3, max_distance: float = 2.0) -> list[str]:
+        if not self._chunks:
             return []
 
-        filtered_docs = []
-        for doc, distance in zip(docs[0], distances[0]):
-            if distance is not None and distance <= max_distance:
-                filtered_docs.append(doc)
+        query_embedding = self.embedder.encode_query(query)
+        scores = [
+            _cosine_similarity(query_embedding, emb)
+            for emb in self._embeddings
+        ]
 
-        return filtered_docs
+        ranked = sorted(
+            zip(scores, self._chunks),
+            key=lambda x: x[0],
+            reverse=True,
+        )
+
+        return [chunk for score, chunk in ranked[:top_k] if score > 0.1]

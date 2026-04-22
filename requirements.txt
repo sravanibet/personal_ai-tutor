@@ -2,8 +2,7 @@ streamlit
 requests
 langchain
 langchain_text_splitters
-chromadb
-sentence-transformers
+scikit-learn
 pypdf
 python-docx
 #if you do not have bew install it
