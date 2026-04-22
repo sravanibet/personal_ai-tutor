@@ -321,6 +321,29 @@ APP_CSS = """
         background: transparent;
     }
 
+    /* File uploader dark theme fix */
+    [data-testid="stFileUploader"] section {
+        background: rgba(255, 255, 255, 0.04) !important;
+        border: 1px dashed var(--border) !important;
+        border-radius: 12px !important;
+    }
+
+    [data-testid="stFileUploader"] section:hover {
+        background: rgba(255, 255, 255, 0.07) !important;
+        border-color: var(--accent) !important;
+    }
+
+    [data-testid="stFileUploader"] section > div {
+        color: var(--text-muted) !important;
+    }
+
+    [data-testid="stFileUploader"] button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: var(--text) !important;
+        border: 1px solid var(--border) !important;
+        border-radius: 8px !important;
+    }
+
     .stTextInput input,
     .stTextArea textarea {
         background: rgba(255, 255, 255, 0.04);
@@ -580,7 +603,13 @@ def render_left_panel(
         </div>
         '''
     )
-    return model_name, difficulty, mode, temperature, active_tab
+
+    st.markdown("---")
+    clear_clicked = st.button("🗑️ Clear Chat", use_container_width=True)
+    if clear_clicked:
+        return model_name, difficulty, mode, temperature, active_tab, True
+
+    return model_name, difficulty, mode, temperature, active_tab, False
 
 
 def render_message_card(message: Mapping[str, Any]) -> str | None:
