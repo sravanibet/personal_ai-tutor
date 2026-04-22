@@ -25,8 +25,32 @@ APP_CSS = """
         --shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
     }
 
-    html, body, [class*="css"] {
+    html, body, [class*="css"], [class*="st-"], * {
         font-family: 'Space Grotesk', sans-serif;
+        color-scheme: dark !important;
+    }
+
+    /* Force dark on every possible Streamlit container */
+    body, .main, .stApp, [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewBlockContainer"], .block-container,
+    [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
+        background-color: #14161f !important;
+        color: #f5f7fb !important;
+    }
+
+    /* Force all text inputs, selects, areas dark */
+    input, textarea, select, [data-baseweb="input"], [data-baseweb="textarea"],
+    [data-baseweb="select"], [data-baseweb="base-input"] {
+        background-color: rgba(255,255,255,0.04) !important;
+        color: #f5f7fb !important;
+        border-color: rgba(255,255,255,0.08) !important;
+    }
+
+    /* Force all dropdowns/popups dark */
+    [data-baseweb="popover"], [data-baseweb="menu"], [role="listbox"],
+    [role="option"], [data-baseweb="list"] {
+        background-color: #1b1e29 !important;
+        color: #f5f7fb !important;
     }
 
     .stApp {
@@ -46,7 +70,7 @@ APP_CSS = """
     }
 
     header[data-testid="stHeader"] {
-        background: linear-gradient(180deg, rgba(13, 16, 23, 0.96), rgba(13, 16, 23, 0.72));
+        display: none !important;
     }
 
     div[data-testid="stToolbar"] {
@@ -529,6 +553,18 @@ APP_CSS = """
         margin-bottom: 1rem;
     }
 
+    @media (prefers-color-scheme: light) {
+        html, body, .stApp, [data-testid="stAppViewContainer"],
+        [data-testid="stMain"], .block-container {
+            background-color: #14161f !important;
+            color: #f5f7fb !important;
+        }
+        input, textarea, select {
+            background-color: rgba(255,255,255,0.04) !important;
+            color: #f5f7fb !important;
+        }
+    }
+
     @media (max-width: 1100px) {
         .left-panel, .main-panel, .right-panel {
             min-height: auto;
@@ -624,7 +660,6 @@ def render_left_panel(
         '''
     )
 
-    st.markdown("---")
     clear_clicked = st.button("🗑️ Clear Chat", use_container_width=True)
     if clear_clicked:
         return model_name, difficulty, mode, temperature, active_tab, True
