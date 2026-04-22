@@ -321,6 +321,26 @@ APP_CSS = """
         background: transparent;
     }
 
+    /* Fix LaTeX / math formula white background */
+    .katex-display, .katex {
+        color: var(--text) !important;
+    }
+    .stMarkdown .katex-html {
+        background: transparent !important;
+    }
+    [data-testid="stMarkdownContainer"] mjx-container,
+    mjx-container svg {
+        background: transparent !important;
+        color: var(--text) !important;
+    }
+    /* Fix inline code white background */
+    code {
+        background: rgba(255,255,255,0.08) !important;
+        color: #e8a87c !important;
+        border-radius: 4px;
+        padding: 1px 5px;
+    }
+
     /* File uploader dark theme fix */
     [data-testid="stFileUploader"] section {
         background: rgba(255, 255, 255, 0.04) !important;
@@ -631,12 +651,7 @@ def render_message_card(message: Mapping[str, Any]) -> str | None:
         with down_col:
             if st.button("Needs work", key=f"needs_work_{message['id']}", use_container_width=True):
                 action = "needs-work"
-        snippets = message.get("source_snippets") or []
-        if snippets:
-            with st.expander("Retrieved source snippets"):
-                for index, snippet in enumerate(snippets, start=1):
-                    st.markdown(f"**Snippet {index}:**")
-                    st.write(snippet)
+        pass  # snippet expander removed — grounding shown via notes-chip badge
 
     return action
 
