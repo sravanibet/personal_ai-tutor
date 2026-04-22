@@ -1,7 +1,180 @@
-# 🎓 ML Tutor Chatbot
+# 🎓 Personal AI Tutor
 
-ML Tutor Chatbot is a local AI-powered tutoring assistant for Machine Learning.  
-It combines a local LLM, tutor-style prompting, and a simple RAG (Retrieval-Augmented Generation) pipeline to help students learn concepts step-by-step.
+Personal AI Tutor is a local AI-powered tutoring assistant for Machine Learning.
+It combines a local LLM (via Ollama), tutor-style prompt engineering, and a RAG pipeline to help students learn concepts step-by-step through chat, quizzes, and hints.
+
+---
+
+## 🚀 Features
+
+- 💬 **Chat** — Ask any ML question and get tutor-style streamed responses
+- 📂 **Upload Notes** — Upload PDF, DOCX, or TXT to ground answers in your own material
+- 🧪 **Modes** — Explain, Quiz, Hint (each with a custom system prompt)
+- 🎯 **Difficulty** — Beginner, Intermediate, Advanced
+- ⚡ **Streaming** — Responses stream token-by-token live
+- 🧠 **Quiz generation** — Generates 2 MCQ questions directly on the topic
+- 💡 **Hint mode** — Guides without giving the answer
+- 📊 **Answer evaluator** — Type your own explanation and get tutor feedback
+- 🗑️ **Clear Chat** — Always visible in the left panel
+- 🌙 **Dark theme** — Forced dark mode on all machines via `.streamlit/config.toml`
+- 🔍 **RAG retrieval** — Embeds uploaded notes with sentence-transformers, stores in ChromaDB
+
+---
+
+## 🏗️ Tech Stack
+
+- Python
+- Streamlit (UI)
+- Ollama (Local LLM — mistral, llama3.2:3b, llama3.2:1b, llama3.1:8b, gemma3:12b)
+- sentence-transformers (embeddings)
+- ChromaDB (vector store)
+- pypdf / python-docx (document loading)
+
+---
+
+## 🧠 How It Works
+
+1. User asks a question in Chat mode
+2. If notes are uploaded, relevant chunks are retrieved using semantic search
+3. Retrieved context + question + system prompt are sent to Ollama
+4. The local LLM streams a tutor-style response token by token
+5. In Quiz mode — generates 2 MCQ questions directly
+6. In Hint mode — guides with progressive hints without giving the answer
+
+---
+
+## 📁 Project Structure
+
+```
+app.py                        ← entry point (run this)
+src/
+  application/
+    app.py                    ← main logic (chat, quiz, hints, RAG)
+    ui.py                     ← all Streamlit UI and CSS
+  model/
+    ollama_client.py          ← streams/sends prompts to Ollama
+    prompt_builder.py         ← builds system prompts per mode/difficulty
+  rag/
+    loader.py                 ← reads PDF/DOCX/TXT files
+    chunker.py                ← splits text into chunks
+    embedder.py               ← encodes chunks with sentence-transformers
+    retriever.py              ← finds relevant chunks via ChromaDB
+  utils/
+    config.py                 ← app config (Ollama URL, default model)
+answer_evaluator.py           ← evaluates user's typed answers
+.streamlit/config.toml        ← forces dark theme on all machines
+requirements.txt
+```
+
+---
+
+## ⚙️ Setup Instructions (Windows)
+
+### 1. Install prerequisites
+
+- Python 3.10+
+- Git
+- Ollama — download from https://ollama.com
+
+### 2. Clone the repo
+
+```powershell
+git clone https://github.com/sravanibet/personal_ai-tutor.git
+cd personal_ai-tutor
+```
+
+### 3. Create virtual environment
+
+```powershell
+python -m venv .venv
+```
+
+### 4. Activate virtual environment
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks it:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.venv\Scripts\Activate.ps1
+```
+
+### 5. Install dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 6. Pull a model
+
+```powershell
+ollama pull mistral
+```
+
+Other supported models (pull any you want to use):
+
+```powershell
+ollama pull llama3.2:3b
+ollama pull llama3.2:1b
+ollama pull llama3.1:8b
+ollama pull gemma3:12b
+```
+
+### 7. Start Ollama (if not already running)
+
+```powershell
+ollama serve
+```
+
+### 8. Run the app
+
+```powershell
+python -m streamlit run app.py
+```
+
+Open: **http://localhost:8501**
+
+---
+
+## 👥 Teammate Checklist
+
+- [ ] Repo cloned
+- [ ] `.venv` created and activated
+- [ ] `pip install -r requirements.txt` completed
+- [ ] Ollama installed and running
+- [ ] At least one model pulled (`ollama pull mistral`)
+- [ ] App starts with `python -m streamlit run app.py`
+
+---
+
+## 📂 Supported File Types
+
+- PDF (typed text — layout-aware extraction)
+- DOCX
+- TXT
+
+⚠️ Handwritten or scanned PDFs will not extract text correctly.
+
+---
+
+## 🌐 Sharing with Teammates
+
+The app runs locally — teammates cannot use your `localhost` link.
+Each person must run the app on their own machine.
+
+To share over the same WiFi:
+
+```powershell
+python -m streamlit run app.py --server.address 0.0.0.0
+```
+
+Then share your local IP (find it with `ipconfig`). Teammates open `http://<your-ip>:8501`.
+
+---
+
 
 ---
 
@@ -64,159 +237,8 @@ Tokenized using Hugging Face tokenizer
 Prompt tokens masked to train only on assistant responses
 
 🔧 LoRA Fine-Tuning
-Base model: Qwen2.5-0.5B-Instruct
-LoRA applied to attention layers (q_proj, v_proj)
-
----
-
-## ⚙️ Setup Instructions (Windows)
-
-These steps are the recommended way for teammates to run the project on their own machines.
-
-### 1. Install prerequisites
-
-Each teammate needs:
-- Python
-- Git
-- Ollama
-
-Download Ollama from https://ollama.com and make sure it is installed successfully.
-
-### 2. Get the project code
-
-If using Git:
-
-```powershell
-git clone <your-repo-url>
-cd ML_tutor_chatbot
-```
-
-If not using Git, copy the project folder and open it in a terminal.
-
-### 3. Create the virtual environment
-
-```powershell
-python -m venv .venv
-```
-
-### 4. Activate the virtual environment
-
-```powershell
-.venv\Scripts\Activate.ps1
-```
-
-If PowerShell blocks script execution, run:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.venv\Scripts\Activate.ps1
-```
-
-### 5. Install Python dependencies
-
-```powershell
-pip install -r requirements.txt
-```
-
-### 6. Pull the Ollama model
-
-```powershell
-ollama pull mistral
-```
-
-### 7. Start Ollama
-
-In a separate terminal, run:
-
-```powershell
-ollama serve
-```
-
-If Ollama is already running in the background on the machine, this step may not be necessary.
-
-### 8. Run the app
-
-```powershell
-.venv\Scripts\python.exe -m streamlit run entry.py
-```
-
-Then open:
-
-```text
-http://localhost:8501
-```
-
----
-
-## 👥 Teammate Checklist
-
-Before running the app, each teammate should confirm:
-- The repo is downloaded on their machine
-- `.venv` exists
-- `pip install -r requirements.txt` completed successfully
-- Ollama is installed
-- `ollama pull mistral` has been run
-- Ollama is running
-- The app starts with `.venv\Scripts\python.exe -m streamlit run entry.py`
-
----
-
-## 🌐 Access Notes
-
-- `http://localhost:8501` only works on the same machine that is running the app.
-- Teammates cannot use your `localhost` link from their own computers.
-- For team development, each teammate should run the app locally on their own machine.
-- For a shared public version, Streamlit and Ollama would need to be deployed on a shared server.
-
----
-
-## 📂 Supported File Types
-
-- PDF (typed text only)  
-- DOCX  
-- TXT  
-
-⚠️ Handwritten or scanned PDFs may not work properly in this version.
-
----
-
-## 🧠 How It Works
-
-1. Upload notes  
-2. Notes are extracted, chunked, and stored in the retriever  
-3. When a question is asked, relevant chunks are retrieved  
-4. Retrieved context is passed to the model  
-5. The model responds in tutor-style format  
-
----
-
-## 👥 Team Workflow
-
-- Always create a new branch  
-- Do not push directly to main  
-- Submit a Pull Request for review  
-
----
-
-## 📌 Important Notes
-
-Make sure NOT to push:
-- venv/  
-- __pycache__/  
-- .DS_Store  
-
 ---
 
 ## 💡 Project Goal
 
-To build an AI tutor that:
-- explains concepts clearly  
-- adapts to student level  
-- uses course material as grounding  
-- feels like a real teaching assistant  
-
----
-
-## 👨‍💻 Author
-
-Developed as part of a Machine Learning + AI Systems project.
+To build an AI tutor that explains ML concepts clearly, adapts to student level, uses uploaded course material as grounding, and feels like a real teaching assistant.

@@ -53,17 +53,17 @@ Instructions:
     - Keep the full response under 90 words unless the user explicitly asks for more
 """.strip(),
         "Quiz": """
-Goal: test understanding through questions.
+Goal: test understanding ONLY through quiz questions. Do NOT explain the topic.
 
 Instructions:
-- First give a VERY short explanation (1-2 lines max)
-    - Then generate exactly 2 multiple choice questions
+- Output EXACTLY 2 multiple choice questions. Nothing else before them.
 - Each question must have:
-  - 4 options (A, B, C, D)
-  - clearly marked correct answer
-- After all questions, give a short explanation of answers
-- Keep everything simple and student-friendly
-    - Keep the full response compact and avoid extra filler text
+  - 4 options labeled A, B, C, D
+  - The correct answer clearly marked at the end (e.g. "Answer: B")
+- After both questions, give a ONE line explanation per answer
+- Do NOT start with an explanation, introduction, or overview
+- Do NOT say "Let's learn" or "Here's a quiz" — just start with "Q1."
+- Keep it concise and student-friendly
 """.strip(),
     }
 

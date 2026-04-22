@@ -456,7 +456,7 @@ def main() -> None:
     temperature = 0.3
 
     with left_col:
-        model_name, difficulty, mode, temperature, active_tab = ui.render_left_panel(
+        model_name, difficulty, mode, temperature, active_tab, clear_clicked = ui.render_left_panel(
             CONFIG.app_icon,
             st.session_state.active_tab,
             model_name,
@@ -465,6 +465,9 @@ def main() -> None:
             temperature,
         )
         st.session_state.active_tab = active_tab
+        if clear_clicked:
+            clear_chat()
+            st.rerun()
 
     with main_col:
         render_main_panel(model_name, difficulty, mode, temperature, active_tab)
