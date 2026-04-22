@@ -394,18 +394,6 @@ APP_CSS = """
         border-radius: 8px !important;
     }
 
-    [data-testid="stFileUploader"] button span {
-        visibility: hidden !important;
-        font-size: 0 !important;
-    }
-
-    [data-testid="stFileUploader"] button::after {
-        content: "Browse files";
-        visibility: visible !important;
-        font-size: 0.875rem;
-        color: var(--text);
-    }
-
     .stTextInput input,
     .stTextArea textarea {
         background: rgba(255, 255, 255, 0.04);
