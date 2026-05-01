@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from textwrap import dedent
 from typing import Any, Mapping
 
@@ -689,28 +690,150 @@ def render_left_panel(
     return model_name, difficulty, mode, temperature, active_tab, False
 
 
-def render_message_card(message: Mapping[str, Any]) -> str | None:
+def render_message_card(message: Mapping[str, Any]) -> tuple[str, str | None] | None:
     render_message_header(message)
 
     if message["role"] == "assistant" and message.get("source_snippets"):
         render_html('<div class="notes-chip">📚 Answer grounded in uploaded notes</div>')
 
-    st.markdown(message["content"])
+    quiz_questions = quiz_questions_for_message(message)
+    if quiz_questions:
+        render_quiz_questions(message, quiz_questions)
+    else:
+        st.markdown(sanitize_quiz_content(message["content"]))
+
     action = None
     if message["role"] == "assistant":
         copy_col, up_col, down_col, spacer = st.columns([1.05, 1, 1.15, 5])
         with copy_col:
             if st.button("Copy", key=f"copy_{message['id']}", use_container_width=True):
-                action = "copy"
+                action = ("copy", None)
         with up_col:
             if st.button("Helpful", key=f"helpful_{message['id']}", use_container_width=True):
-                action = "helpful"
+                action = ("helpful", None)
         with down_col:
             if st.button("Needs work", key=f"needs_work_{message['id']}", use_container_width=True):
-                action = "needs-work"
+                action = ("needs-work", None)
+
+        if is_quiz_message(message):
+            answer_text = build_quiz_answer_submission(message, quiz_questions)
+            answer_col, show_col, hint_col = st.columns([1.25, 1, 0.9])
+            with answer_col:
+                if st.button("Check Right or Wrong", key=f"check_quiz_{message['id']}", use_container_width=True):
+                    action = ("check-quiz", answer_text)
+            with show_col:
+                if st.button("Show Correct Answers", key=f"show_quiz_{message['id']}", use_container_width=True):
+                    action = ("show-quiz-answer", None)
+            with hint_col:
+                if st.button("Give Hint", key=f"hint_quiz_{message['id']}", use_container_width=True):
+                    action = ("quiz-hint", None)
+
+            quiz_feedback = st.session_state.get("quiz_feedback_by_message", {}).get(message["id"])
+            if quiz_feedback:
+                st.markdown("### Quiz Feedback")
+                st.write(quiz_feedback)
         pass  # snippet expander removed — grounding shown via notes-chip badge
 
     return action
+
+
+def is_quiz_message(message: Mapping[str, Any]) -> bool:
+    if message.get("quiz_data"):
+        return True
+
+    if message.get("mode") == "Quiz":
+        return True
+
+    if message.get("role") != "assistant":
+        return False
+
+    content = message.get("content", "")
+    quiz_patterns = [
+        r"Question\s*1",
+        r"\b1[\).:]\s*",
+        r"\bA\)",
+        r"\bB\)",
+        r"multiple choice",
+        r"Reply with your answers",
+    ]
+    return any(re.search(pattern, content, re.IGNORECASE) for pattern in quiz_patterns)
+
+
+def quiz_questions_for_message(message: Mapping[str, Any]) -> list[dict[str, Any]]:
+    quiz_data = message.get("quiz_data")
+    if quiz_data and quiz_data.get("questions"):
+        return quiz_data["questions"]
+    if is_quiz_message(message):
+        return parse_quiz_questions(message.get("content", ""))
+    return []
+
+
+def sanitize_quiz_content(content: str) -> str:
+    cleaned_lines: list[str] = []
+    for line in content.splitlines():
+        if re.match(r"\s*(Answer|Explanation|Correct Answers?)\s*:", line, re.IGNORECASE):
+            continue
+        cleaned_lines.append(line)
+    return "\n".join(cleaned_lines).strip()
+
+
+def parse_quiz_questions(content: str) -> list[dict[str, Any]]:
+    matches = re.finditer(
+        r"(?:^|\n)\s*(?:Question\s*)?(\d+)[\).:]\s*(.*?)(?=\s*A\))\s*A\)\s*(.*?)(?=\s*B\))\s*B\)\s*(.*?)(?=\s*C\))\s*C\)\s*(.*?)(?=\s*D\))\s*D\)\s*(.*?)(?=(?:\n\s*(?:Question\s*)?\d+[\).:])|\Z)",
+        sanitize_quiz_content(content),
+        re.IGNORECASE | re.DOTALL,
+    )
+
+    questions: list[dict[str, Any]] = []
+    for match in matches:
+        option_d = re.split(r"\b(?:Answer|Explanation|Correct Answers?)\b", match.group(6), maxsplit=1, flags=re.IGNORECASE)[0]
+        options = {
+            "A": normalize_quiz_text(match.group(3)),
+            "B": normalize_quiz_text(match.group(4)),
+            "C": normalize_quiz_text(match.group(5)),
+            "D": normalize_quiz_text(option_d),
+        }
+        questions.append(
+            {
+                "number": match.group(1),
+                "question": normalize_quiz_text(match.group(2)),
+                "options": options,
+            }
+        )
+    return questions
+
+
+def normalize_quiz_text(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def render_quiz_questions(message: Mapping[str, Any], questions: list[dict[str, Any]]) -> None:
+    st.markdown('<div class="section-label">Choose your answers</div>', unsafe_allow_html=True)
+    for question in questions:
+        question_number = question.get("number")
+        st.markdown(f"**{question_number}. {question['question']}**")
+        options = [f"{label}) {text}" for label, text in question["options"].items()]
+        st.radio(
+            f"Question {question_number}",
+            options,
+            index=None,
+            key=f"quiz_select_{message['id']}_{question_number}",
+            label_visibility="collapsed",
+        )
+
+
+def build_quiz_answer_submission(message: Mapping[str, Any], questions: list[dict[str, Any]]) -> str | None:
+    if not questions:
+        return None
+
+    selections: list[str] = []
+    for question in questions:
+        question_number = question.get("number")
+        selected = st.session_state.get(f"quiz_select_{message['id']}_{question_number}")
+        if not selected:
+            return None
+        selections.append(f"{question_number}:{selected[0]}")
+    return ", ".join(selections)
 
 
 def render_message_header(message: Mapping[str, Any]) -> None:
@@ -909,10 +1032,10 @@ def render_right_panel(mode: str, recent_topics: list[str]) -> tuple[str, str] |
         st.markdown('<div class="panel-card cta-card">', unsafe_allow_html=True)
         st.markdown('<div class="topic-badge">🧠 Learning mode</div>', unsafe_allow_html=True)
         st.markdown('<h3 class="side-card-title">Quiz</h3>', unsafe_allow_html=True)
-        st.markdown('<div class="helper-copy">Generate a quiz question from the current topic.</div>', unsafe_allow_html=True)
+        st.markdown('<div class="helper-copy">Generate quiz options on the current topic without showing the answers.</div>', unsafe_allow_html=True)
         if st.button("Generate Quiz", use_container_width=True):
             selected_action = (
-                "Create a short quiz on this topic with multiple choice questions and answers.",
+                "Create exactly 2 multiple-choice questions on this topic. Use options A, B, C, and D. Do not include answers or explanations.",
                 "Quiz",
             )
         st.markdown('<div class="side-separator"></div>', unsafe_allow_html=True)

@@ -34,17 +34,30 @@ Goal: teach clearly.
         "Hint": """
 Goal: guide thinking.
 
-- Do NOT give full answer immediately
-- Give small hints step by step
-- Encourage reasoning
+    - Do NOT give the final answer
+    - Give 1 to 3 short hints only
+    - Start broad, then get slightly more specific
+    - Encourage the student to try answering after the hints
 """.strip(),
         "Quiz": """
 Goal: test understanding.
 
-- Give very short explanation (1–2 lines)
-- Then 2–3 MCQs
-- Each with 4 options
-- Provide correct answers with explanation
+- Output only the quiz
+- Write exactly 2 multiple-choice questions
+- Use this format exactly:
+    1. question text
+    A) option text
+    B) option text
+    C) option text
+    D) option text
+    2. question text
+    A) option text
+    B) option text
+    C) option text
+    D) option text
+- Do NOT include answers
+- Do NOT include explanations
+- Do NOT include intro text before the questions
 """.strip(),
     }
 

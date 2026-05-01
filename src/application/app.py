@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from datetime import datetime
@@ -7,7 +8,7 @@ from typing import Any
 
 import streamlit as st
 
-from answer_evaluator import evaluate_answer
+from answer_evaluator import evaluate_answer, evaluate_quiz_answer
 from src.application import ui
 from src.model.ollama_client import OllamaClient
 from src.model.prompt_builder import build_messages
@@ -47,6 +48,7 @@ def initialize_session_state() -> None:
         "pending_mode_override": None,
         "last_user_question": None,
         "last_feedback": None,
+        "quiz_feedback_by_message": {},
         "next_message_id": 1,
         "copied_message_text": None,
         "copied_message_id": None,
@@ -75,6 +77,9 @@ def message_record(
     content: str,
     source_snippets: list[str] | None = None,
     track_as_topic: bool | None = None,
+    mode: str | None = None,
+    topic: str | None = None,
+    quiz_data: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "id": next_message_id(),
@@ -84,6 +89,9 @@ def message_record(
         "source_snippets": source_snippets or [],
         "rating": None,
         "track_as_topic": role == "user" if track_as_topic is None else track_as_topic,
+        "mode": mode,
+        "topic": topic,
+        "quiz_data": quiz_data,
     }
 
 
@@ -106,6 +114,7 @@ def clear_chat() -> None:
     st.session_state.pending_mode_override = None
     st.session_state.copied_message_text = None
     st.session_state.copied_message_id = None
+    st.session_state.quiz_feedback_by_message = {}
     st.session_state.next_message_id = 1
     reset_notes()
 
@@ -163,6 +172,133 @@ def prepare_chat_request(
     return messages, source_snippets
 
 
+def get_retrieved_context(question: str) -> tuple[list[str], str | None]:
+    source_snippets: list[str] = []
+    retrieved_context = None
+
+    if st.session_state.notes_loaded and st.session_state.retriever is not None:
+        source_snippets = st.session_state.retriever.retrieve(question, top_k=1)
+        if source_snippets:
+            shortened_snippets = [snippet[:450] for snippet in source_snippets]
+            retrieved_context = "\n\n---\n\n".join(shortened_snippets)
+
+    return source_snippets, retrieved_context
+
+
+def build_quiz_generation_prompt(topic: str, difficulty: str, retrieved_context: str | None) -> str:
+    context_block = retrieved_context or "No uploaded notes were provided. Use general ML knowledge."
+    return f"""
+Create a machine learning multiple-choice quiz as strict JSON.
+
+Topic: {topic}
+Difficulty: {difficulty}
+Context:
+{context_block}
+
+Return only valid JSON in this exact shape:
+{{
+  "questions": [
+    {{
+      "question": "text",
+      "options": {{"A": "text", "B": "text", "C": "text", "D": "text"}},
+      "correct": "A",
+      "hint": "short hint without revealing the answer"
+    }},
+    {{
+      "question": "text",
+      "options": {{"A": "text", "B": "text", "C": "text", "D": "text"}},
+      "correct": "B",
+      "hint": "short hint without revealing the answer"
+    }}
+  ]
+}}
+
+Rules:
+- Exactly 2 questions
+- Each question must have exactly 4 options labeled A, B, C, D
+- "correct" must be one of A, B, C, D
+- Keep hints short and useful
+- Do not include markdown fences or extra text
+""".strip()
+
+
+def normalize_quiz_data(raw_data: dict[str, Any]) -> dict[str, Any]:
+    questions = raw_data.get("questions", [])
+    normalized_questions: list[dict[str, Any]] = []
+
+    for index, question in enumerate(questions[:2], start=1):
+        options = question.get("options", {})
+        normalized_options = {
+            key: str(options.get(key, "")).strip()
+            for key in ["A", "B", "C", "D"]
+        }
+        correct = str(question.get("correct", "")).strip().upper()
+        if correct not in normalized_options:
+            continue
+        normalized_questions.append(
+            {
+                "number": index,
+                "question": str(question.get("question", "")).strip(),
+                "options": normalized_options,
+                "correct": correct,
+                "hint": str(question.get("hint", "Think about the core concept.")).strip(),
+            }
+        )
+
+    if len(normalized_questions) != 2:
+        raise ValueError("Quiz generation did not return 2 valid questions.")
+
+    return {"questions": normalized_questions}
+
+
+def extract_json_payload(response_text: str) -> dict[str, Any]:
+    cleaned = response_text.strip()
+
+    if "```" in cleaned:
+        parts = cleaned.split("```")
+        for part in parts:
+            candidate = part.strip()
+            if candidate.startswith("json"):
+                candidate = candidate[4:].strip()
+            if candidate.startswith("{") and candidate.endswith("}"):
+                return json.loads(candidate)
+
+    start_index = cleaned.find("{")
+    end_index = cleaned.rfind("}")
+    if start_index != -1 and end_index != -1 and end_index > start_index:
+        return json.loads(cleaned[start_index:end_index + 1])
+
+    raise ValueError("Quiz generation did not return valid JSON.")
+
+
+def format_quiz_for_display(quiz_data: dict[str, Any]) -> str:
+    lines: list[str] = []
+    for question in quiz_data["questions"]:
+        lines.append(f"{question['number']}. {question['question']}")
+        for label in ["A", "B", "C", "D"]:
+            lines.append(f"{label}) {question['options'][label]}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+def generate_quiz_message(
+    topic: str,
+    difficulty: str,
+    model_name: str,
+    temperature: float,
+) -> tuple[str, dict[str, Any], list[str]]:
+    source_snippets, retrieved_context = get_retrieved_context(topic)
+    client = OllamaClient(CONFIG.ollama_base_url)
+    response = client.chat(
+        model=model_name,
+        messages=[{"role": "user", "content": build_quiz_generation_prompt(topic, difficulty, retrieved_context)}],
+        temperature=temperature,
+        num_predict=700,
+    )
+    quiz_data = normalize_quiz_data(extract_json_payload(response))
+    return format_quiz_for_display(quiz_data), quiz_data, source_snippets
+
+
 def handle_question(
     user_input: str,
     difficulty: str,
@@ -174,7 +310,7 @@ def handle_question(
     if not question:
         return
 
-    st.session_state.messages_for_display.append(message_record("user", question))
+    st.session_state.messages_for_display.append(message_record("user", question, mode=mode, topic=question))
     st.session_state.last_user_question = question
 
     client = OllamaClient(CONFIG.ollama_base_url)
@@ -188,7 +324,7 @@ def handle_question(
     )
 
     st.session_state.messages_for_display.append(
-        message_record("assistant", response, source_snippets)
+        message_record("assistant", response, source_snippets, mode=mode, topic=question)
     )
     st.session_state.chat_history.append({"role": "user", "content": question})
     st.session_state.chat_history.append({"role": "assistant", "content": response})
@@ -210,14 +346,38 @@ def stream_question_response(
         return
 
     visible_user_text = (display_user_text or question).strip()
-    user_message = message_record("user", visible_user_text, track_as_topic=track_as_topic)
+    topic = retrieval_query or question
+    user_message = message_record(
+        "user",
+        visible_user_text,
+        track_as_topic=track_as_topic,
+        mode=mode,
+        topic=topic,
+    )
     st.session_state.messages_for_display.append(user_message)
     if update_last_user_question:
         st.session_state.last_user_question = question
     ui.render_message_card(user_message)
 
+    if mode == "Quiz":
+        assistant_message = message_record("assistant", "", [], mode=mode, topic=topic)
+        ui.render_streaming_assistant(assistant_message)
+        quiz_content, quiz_data, source_snippets = generate_quiz_message(
+            topic,
+            difficulty,
+            model_name,
+            temperature,
+        )
+        assistant_message["content"] = quiz_content
+        assistant_message["source_snippets"] = source_snippets
+        assistant_message["quiz_data"] = quiz_data
+        st.session_state.messages_for_display.append(assistant_message)
+        st.session_state.chat_history.append({"role": "user", "content": visible_user_text})
+        st.session_state.chat_history.append({"role": "assistant", "content": quiz_content})
+        return
+
     messages, source_snippets = prepare_chat_request(question, difficulty, mode, retrieval_query)
-    assistant_message = message_record("assistant", "", source_snippets)
+    assistant_message = message_record("assistant", "", source_snippets, mode=mode, topic=topic)
     body_placeholder = ui.render_streaming_assistant(assistant_message)
 
     client = OllamaClient(CONFIG.ollama_base_url)
@@ -241,10 +401,11 @@ def queue_follow_up(
     instruction: str,
     mode_override: str | None = None,
     display_text: str | None = None,
+    topic_override: str | None = None,
 ) -> None:
     last_question = st.session_state.get("last_user_question")
     draft_question = st.session_state.get("chat_input", "").strip()
-    topic = draft_question or last_question
+    topic = topic_override or draft_question or last_question
 
     if not topic:
         st.warning("Type or ask a question first so Quiz or Hint knows which topic to use.")
@@ -322,6 +483,94 @@ def apply_message_action(message_id: int, action: str) -> None:
         st.toast(f"Marked response as {label}.")
 
 
+def apply_quiz_action(message_id: int, action: str, answer_text: str | None) -> None:
+    message = find_message(message_id)
+    if not message:
+        return
+
+    quiz_data = message.get("quiz_data")
+
+    if action == "quiz-hint":
+        if quiz_data:
+            hint_lines = [
+                f"Question {question['number']}: {question['hint']}"
+                for question in quiz_data["questions"]
+            ]
+            st.session_state.quiz_feedback_by_message[message_id] = "\n\n".join(hint_lines)
+            st.toast("Hint added below the quiz.")
+            return
+
+        topic = message.get("topic") or st.session_state.get("last_user_question")
+        if not topic:
+            st.warning("Ask about a topic first so the tutor knows what to hint.")
+            return
+        queue_follow_up(
+            "Give me a short hint about this topic without fully answering it yet.",
+            "Hint",
+            display_text=f"Give me a hint for: {topic}",
+            topic_override=topic,
+        )
+        return
+
+    if action == "check-quiz":
+        submitted_answer = (answer_text or "").strip()
+        if not submitted_answer:
+            st.session_state.quiz_feedback_by_message[message_id] = (
+                "Select an option for each question before checking right or wrong."
+            )
+            return
+
+        if quiz_data:
+            submitted_by_number = {}
+            for item in submitted_answer.split(","):
+                if ":" not in item:
+                    continue
+                number, selected = item.split(":", 1)
+                submitted_by_number[number.strip()] = selected.strip().upper()
+
+            feedback_lines: list[str] = []
+            correct_count = 0
+            for question in quiz_data["questions"]:
+                question_number = str(question["number"])
+                submitted_option = submitted_by_number.get(question_number)
+                correct_option = question["correct"]
+                if submitted_option == correct_option:
+                    correct_count += 1
+                    feedback_lines.append(f"Question {question_number}: Correct")
+                else:
+                    feedback_lines.append(
+                        f"Question {question_number}: Wrong. Correct answer is {correct_option}) {question['options'][correct_option]}"
+                    )
+
+            overall = "Overall: Correct" if correct_count == len(quiz_data["questions"]) else "Overall: Wrong"
+            st.session_state.quiz_feedback_by_message[message_id] = "\n".join([overall] + feedback_lines)
+            st.toast("Quiz checked below.")
+            return
+
+        with st.spinner("Checking your quiz answer..."):
+            st.session_state.quiz_feedback_by_message[message_id] = evaluate_quiz_answer(
+                message["content"],
+                submitted_answer,
+            )
+        return
+
+    if action == "show-quiz-answer":
+        if quiz_data:
+            answer_lines = [
+                f"Question {question['number']}: {question['correct']}) {question['options'][question['correct']]}"
+                for question in quiz_data["questions"]
+            ]
+            st.session_state.quiz_feedback_by_message[message_id] = "\n".join(answer_lines)
+            st.toast("Correct answers shown below the quiz.")
+            return
+
+        with st.spinner("Getting the correct answers..."):
+            st.session_state.quiz_feedback_by_message[message_id] = evaluate_quiz_answer(
+                message["content"],
+                "Show the correct answers only.",
+            )
+
+
 def build_recent_topics() -> list[str]:
     topics: list[str] = []
     for message in reversed(st.session_state.messages_for_display):
@@ -346,7 +595,11 @@ def render_chat_tab(
     for message in st.session_state.messages_for_display:
         action = ui.render_message_card(message)
         if action:
-            apply_message_action(message["id"], action)
+            action_name, action_value = action
+            if action_name in {"check-quiz", "show-quiz-answer", "quiz-hint"}:
+                apply_quiz_action(message["id"], action_name, action_value)
+            else:
+                apply_message_action(message["id"], action_name)
             st.rerun()
 
     if st.session_state.copied_message_text:
